@@ -22,7 +22,6 @@ if prompt := st.chat_input("Ask a question about your documents..."):
 
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
-            response = chain.invoke({"query": prompt})
-            answer = response["result"]
+            answer = chain.invoke(prompt)
         st.write(answer)
         st.session_state.messages.append({"role": "assistant", "content": answer})

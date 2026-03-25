@@ -1,12 +1,9 @@
+import os
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-#from langchain_openai import OpenAIEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from dotenv import load_dotenv
-# replace this:
-#from langchain_openai import OpenAIEmbeddings
-# with this:
-from langchain_community.embeddings import HuggingFaceEmbeddings
 
 load_dotenv()
 
@@ -15,6 +12,9 @@ CHROMA_PATH = "chroma_db"
 
 
 def ingest():
+    if not os.path.exists(PDF_PATH):
+        raise FileNotFoundError(f"PDF not found at: {PDF_PATH}")
+
     docs = PyPDFLoader(PDF_PATH).load()
     print(f"Loaded {len(docs)} pages.")
 
@@ -23,9 +23,10 @@ def ingest():
     ).split_documents(docs)
     print(f"Split into {len(chunks)} chunks.")
 
+    print(f"Embedding {len(chunks)} chunks, this may take a moment...")
     Chroma.from_documents(
         documents=chunks,
-       embedding=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2"),
+        embedding=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2"),
         persist_directory=CHROMA_PATH,
     )
     print("Embeddings stored in ChromaDB.")
