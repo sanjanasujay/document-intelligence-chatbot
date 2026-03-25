@@ -14,6 +14,7 @@ with st.sidebar:
 
     if uploaded_file:
         if st.button("Process Document"):
+            st.cache_resource.clear()
             with st.spinner("Ingesting document..."):
                 pages, chunks = ingest_from_bytes(uploaded_file.read(), uploaded_file.name)
             st.session_state.doc_version += 1
