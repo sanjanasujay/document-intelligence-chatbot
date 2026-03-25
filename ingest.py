@@ -9,6 +9,15 @@ CHROMA_PATH = "chroma_db"
 
 
 def ingest_from_bytes(file_bytes: bytes, filename: str):
+    if os.path.exists(CHROMA_PATH):
+        import shutil
+        try:
+            existing = Chroma(persist_directory=CHROMA_PATH, embedding_function=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2"))
+            existing._client.reset()
+        except Exception:
+            pass
+        shutil.rmtree(CHROMA_PATH)
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         tmp.write(file_bytes)
         tmp_path = tmp.name

@@ -5,6 +5,9 @@ from rag_chain import get_rag_chain
 st.set_page_config(page_title="Document Intelligence Chatbot", page_icon="🤖")
 st.title("🤖 Document Intelligence Chatbot")
 
+if "doc_version" not in st.session_state:
+    st.session_state.doc_version = 0
+
 with st.sidebar:
     st.header("Upload Document")
     uploaded_file = st.file_uploader("Upload a PDF", type="pdf")
@@ -13,18 +16,20 @@ with st.sidebar:
         if st.button("Process Document"):
             with st.spinner("Ingesting document..."):
                 pages, chunks = ingest_from_bytes(uploaded_file.read(), uploaded_file.name)
-            st.success(f"Done! {pages} pages, {chunks} chunks indexed.")
+            st.session_state.doc_version += 1
+            st.session_state.messages = []
             st.session_state.ready = True
+            st.success(f"Done! {pages} pages, {chunks} chunks indexed.")
 
 if not st.session_state.get("ready"):
     st.info("Upload and process a PDF from the sidebar to get started.")
     st.stop()
 
 @st.cache_resource
-def load_chain():
+def load_chain(doc_version: int):
     return get_rag_chain()
 
-chain = load_chain()
+chain = load_chain(st.session_state.doc_version)
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
