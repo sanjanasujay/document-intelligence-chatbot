@@ -25,13 +25,16 @@ Question:
 """)
 
 
-def get_rag_chain():
+def get_retriever():
     vectorstore = Chroma(
         persist_directory=CHROMA_PATH,
         embedding_function=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2"),
     )
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
+    return vectorstore.as_retriever(search_kwargs={"k": 4})
 
+
+def get_rag_chain():
+    retriever = get_retriever()
     return (
         {"context": retriever, "question": RunnablePassthrough()}
         | PROMPT
