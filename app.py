@@ -155,8 +155,14 @@ with st.sidebar:
     st.caption("Powered by LangChain · ChromaDB · Ollama")
 
 # ── Main area ──────────────────────────────────────────────────────
-st.markdown('<p class="main-title">🧠 Document Intelligence Chatbot</p>', unsafe_allow_html=True)
-st.markdown('<p class="main-subtitle">Upload a PDF and ask questions about its content.</p>', unsafe_allow_html=True)
+col_title, col_btn = st.columns([8, 1])
+with col_title:
+    st.markdown('<p class="main-title">🧠 Document Intelligence Chatbot</p>', unsafe_allow_html=True)
+    st.markdown('<p class="main-subtitle">Upload a PDF and ask questions about its content.</p>', unsafe_allow_html=True)
+with col_btn:
+    if st.session_state.get("ready") and st.button("🗑️ Clear", help="Clear chat history"):
+        st.session_state.messages = []
+        st.rerun()
 
 if not st.session_state.get("ready"):
     st.markdown("""
@@ -174,12 +180,6 @@ st.markdown(f"""
         📄 <strong>{st.session_state.doc_name}</strong> &nbsp;·&nbsp; {st.session_state.get("doc_stats", "")}
     </div>
 """, unsafe_allow_html=True)
-
-col1, col2 = st.columns([6, 1])
-with col2:
-    if st.button("🗑️ Clear Chat"):
-        st.session_state.messages = []
-        st.rerun()
 
 @st.cache_resource
 def load_chain(doc_version: int):
