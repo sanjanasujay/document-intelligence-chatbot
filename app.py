@@ -66,11 +66,33 @@ st.markdown("""
 
         /* Chat messages */
         [data-testid="stChatMessage"] {
-            background: white;
             border-radius: 12px;
             padding: 0.75rem 1rem;
             margin-bottom: 0.5rem;
             box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            max-width: 70%;
+        }
+        /* User message - right aligned */
+        [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
+            background: #6366f1;
+            color: white;
+            margin-left: auto;
+            margin-right: 0;
+        }
+        [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) p {
+            color: white !important;
+        }
+        /* Assistant message - left aligned */
+        [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
+            background: white;
+            color: #1e1e2e;
+            margin-left: 0;
+            margin-right: auto;
+        }
+        /* Hide avatars */
+        [data-testid="chatAvatarIcon-user"],
+        [data-testid="chatAvatarIcon-assistant"] {
+            display: none !important;
         }
 
         /* Process button */
@@ -135,14 +157,21 @@ with st.sidebar:
         st.markdown(f"**Selected:** {uploaded_file.name}")
         if st.button("⚡ Process Document"):
             st.cache_resource.clear()
-            with st.spinner("Reading and indexing..."):
-                pages, chunks = ingest_from_bytes(uploaded_file.read(), uploaded_file.name)
-            st.session_state.doc_version += 1
-            st.session_state.messages = []
-            st.session_state.ready = True
-            st.session_state.doc_name = uploaded_file.name
-            st.session_state.doc_stats = f"{pages} pages · {chunks} chunks"
-            st.success("✅ Document ready!")
+            st.session_state.pending_file = uploaded_file.read()
+            st.session_state.pending_name = uploaded_file.name
+            st.rerun()
+
+    if "pending_file" in st.session_state:
+        with st.spinner("Reading and indexing..."):
+            pages, chunks = ingest_from_bytes(st.session_state.pending_file, st.session_state.pending_name)
+        st.session_state.doc_version += 1
+        st.session_state.messages = []
+        st.session_state.ready = True
+        st.session_state.doc_name = st.session_state.pending_name
+        st.session_state.doc_stats = f"{pages} pages · {chunks} chunks"
+        del st.session_state.pending_file
+        del st.session_state.pending_name
+        st.success("✅ Document ready!")
 
     st.markdown("---")
     st.markdown("### 💡 Tips")
@@ -189,16 +218,16 @@ chain = load_chain(st.session_state.doc_version)
 
 # Chat history
 for msg in st.session_state.messages:
-    with st.chat_message(msg["role"], avatar="🧑" if msg["role"] == "user" else "🤖"):
+    with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
 # Chat input
 if prompt := st.chat_input("Ask anything about your document..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user", avatar="🧑"):
+    with st.chat_message("user"):
         st.write(prompt)
 
-    with st.chat_message("assistant", avatar="🤖"):
+    with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             answer = chain.invoke(prompt)
         st.write(answer)
